@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════════════════════════════
    WEDDING INVITATION · script.js (Mohanad & Tasnim)
-   Glassmorphism + Countdown Timer + Optimized
+   Glassmorphism + Countdown Timer + Music Control + Fixed Autoplay
    ════════════════════════════════════════════════════════════════════ */
 
 "use strict";
@@ -41,6 +41,9 @@ let doorPlayed = false;
 let currentWhatsAppMessage = "";
 let bgMusic = null;
 let countdownInterval = null;
+let isMusicPlaying = false;
+let musicActivatedByUser = false;
+let audioContextUnlocked = false;
 
 const pageLoading = document.getElementById("page-loading");
 const pageDoor = document.getElementById("page-door");
@@ -55,6 +58,7 @@ const rsvpForm = document.getElementById("rsvp-form");
 const rsvpSuccess = document.getElementById("rsvp-success");
 const particles = document.getElementById("particles");
 const petalsWrap = document.getElementById("petals");
+const musicControlBtn = document.getElementById("music-control-btn");
 
 const daysEl = document.getElementById("days");
 const hoursEl = document.getElementById("hours");
@@ -62,6 +66,46 @@ const minutesEl = document.getElementById("minutes");
 const secondsEl = document.getElementById("seconds");
 const countdownMsgEn = document.getElementById("countdown-message");
 const countdownMsgAr = document.getElementById("countdown-message-ar");
+
+// Function to unlock audio on iOS and modern browsers
+function unlockAudioContext() {
+  if (audioContextUnlocked || !bgMusic) return;
+  
+  const unlock = () => {
+    if (audioContextUnlocked) return;
+    
+    // Create a silent audio context to unlock Web Audio
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+      const context = new AudioContext();
+      const gain = context.createGain();
+      gain.gain.value = 0;
+      gain.connect(context.destination);
+      const oscillator = context.createOscillator();
+      oscillator.connect(gain);
+      oscillator.start(0);
+      oscillator.stop(0.001);
+      context.close();
+    }
+    
+    // Try to play and immediately pause
+    if (bgMusic && bgMusic.paused) {
+      const playPromise = bgMusic.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          bgMusic.pause();
+          bgMusic.currentTime = 0;
+          audioContextUnlocked = true;
+        }).catch(() => {});
+      }
+    }
+    
+    audioContextUnlocked = true;
+  };
+  
+  document.addEventListener("click", unlock, { once: true });
+  document.addEventListener("touchstart", unlock, { once: true });
+}
 
 function initCountdown() {
   if (!daysEl) return;
@@ -117,22 +161,111 @@ function initAudio() {
     bgMusic.src = CONFIG.musicUrl;
     bgMusic.load();
     bgMusic.loop = true;
-    bgMusic.volume = 0;
+    bgMusic.volume = 0.65; // Default at 65%
+    bgMusic.muted = false;
+    
+    // Unlock audio for mobile browsers
+    unlockAudioContext();
+  }
+}
+
+// Music Control Button Handler
+function initMusicControl() {
+  if (!musicControlBtn) return;
+  
+  const musicIcon = musicControlBtn.querySelector('.music-icon');
+  const musicText = musicControlBtn.querySelectorAll('.music-text');
+  
+  const updateButtonUI = () => {
+    if (musicIcon) {
+      musicIcon.textContent = isMusicPlaying ? "🔊" : "🔇";
+    }
+    musicText.forEach(text => {
+      if (text.classList.contains('en-text')) {
+        text.textContent = isMusicPlaying ? "Music On" : "Music Off";
+      } else if (text.classList.contains('ar-text')) {
+        text.textContent = isMusicPlaying ? "موسيقى" : "إيقاف";
+      }
+    });
+  };
+  
+  const toggleMusic = (e) => {
+    e.stopPropagation();
+    if (!bgMusic) return;
+    
+    if (isMusicPlaying) {
+      // Pause music
+      bgMusic.pause();
+      isMusicPlaying = false;
+    } else {
+      // Play music with proper Promise handling
+      const playPromise = bgMusic.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          isMusicPlaying = true;
+          updateButtonUI();
+        }).catch((error) => {
+          console.log("Playback prevented:", error);
+          isMusicPlaying = false;
+          updateButtonUI();
+          // Try to unlock again on next user interaction
+          if (!audioContextUnlocked) {
+            unlockAudioContext();
+          }
+        });
+      }
+    }
+    updateButtonUI();
+  };
+  
+  musicControlBtn.addEventListener("click", toggleMusic);
+  updateButtonUI();
+}
+
+function startMusicOnDoorOpen() {
+  if (!bgMusic || isMusicPlaying) return;
+  
+  // Try to play when door opens (user interaction already happened via knock)
+  const playPromise = bgMusic.play();
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      isMusicPlaying = true;
+      if (musicControlBtn) {
+        const musicIcon = musicControlBtn.querySelector('.music-icon');
+        if (musicIcon) musicIcon.textContent = "🔊";
+      }
+    }).catch((error) => {
+      console.log("Auto-play blocked, waiting for user action:", error);
+      isMusicPlaying = false;
+    });
   }
 }
 
 function fadeInMusic(el, vol = 0.65, ms = 1500) {
   if (!el) return;
   el.volume = 0;
-  el.play().catch((e) => console.log("Audio error:", e));
-  const step = vol / (ms / 50);
-  const id = setInterval(() => {
-    if (el.volume + step < vol) el.volume += step;
-    else {
-      el.volume = vol;
-      clearInterval(id);
-    }
-  }, 50);
+  
+  const playPromise = el.play();
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      isMusicPlaying = true;
+      const step = vol / (ms / 50);
+      const id = setInterval(() => {
+        if (el.volume + step < vol) el.volume += step;
+        else {
+          el.volume = vol;
+          clearInterval(id);
+        }
+      }, 50);
+      if (musicControlBtn) {
+        const musicIcon = musicControlBtn.querySelector('.music-icon');
+        if (musicIcon) musicIcon.textContent = "🔊";
+      }
+    }).catch((e) => {
+      console.log("Audio play error:", e);
+      isMusicPlaying = false;
+    });
+  }
 }
 
 function playDoor() {
@@ -143,14 +276,18 @@ function playDoor() {
   doorGif.currentTime = 0;
   doorGif.muted = true;
   doorGif.play().catch((e) => console.warn("Video error:", e));
+  
+  // Start music when door opens (user already clicked knock button)
   if (bgMusic && CONFIG.musicUrl) {
     bgMusic.currentTime = 0;
     fadeInMusic(bgMusic, 0.65, 1500);
   }
+  
   document.querySelector(".door-bg-wrap").classList.add("revealed");
   doorGlowRing.classList.add("active");
   knockBtn.style.opacity = "0";
   knockBtn.style.pointerEvents = "none";
+  
   let transitionDone = false;
   const goToDetails = () => {
     if (transitionDone) return;
@@ -277,7 +414,7 @@ function preloadAllAssets() {
               onAssetDone();
               resolve();
             },
-            { once: true },
+            { once: true }
           );
           video.addEventListener(
             "error",
@@ -286,7 +423,7 @@ function preloadAllAssets() {
               onAssetDone();
               resolve();
             },
-            { once: true },
+            { once: true }
           );
         } else if (isAudio) {
           const audio = new Audio();
@@ -300,7 +437,7 @@ function preloadAllAssets() {
               onAssetDone();
               resolve();
             },
-            { once: true },
+            { once: true }
           );
           audio.addEventListener(
             "error",
@@ -309,7 +446,7 @@ function preloadAllAssets() {
               onAssetDone();
               resolve();
             },
-            { once: true },
+            { once: true }
           );
           audio.load();
         } else {
@@ -322,7 +459,7 @@ function preloadAllAssets() {
           };
           img.src = src;
         }
-      }),
+      })
   );
   return Promise.all(promises);
 }
@@ -360,7 +497,7 @@ function toggleLanguage() {
   document.documentElement.setAttribute("lang", currentLang);
   document.documentElement.setAttribute(
     "dir",
-    currentLang === "ar" ? "rtl" : "ltr",
+    currentLang === "ar" ? "rtl" : "ltr"
   );
   const nameEl = document.getElementById("rsvp-name");
   const msgEl = document.getElementById("rsvp-msg");
@@ -380,7 +517,7 @@ function handleRSVP(event) {
     alert(
       currentLang === "ar"
         ? "الرجاء إدخال اسمك الكامل."
-        : "Please enter your full name.",
+        : "Please enter your full name."
     );
     return;
   }
@@ -388,7 +525,7 @@ function handleRSVP(event) {
     alert(
       currentLang === "ar"
         ? "الرجاء اختيار حالة الحضور."
-        : "Please confirm attendance.",
+        : "Please confirm attendance."
     );
     return;
   }
@@ -419,7 +556,7 @@ function bindWhatsAppButtons() {
       if (CONFIG.groomWhatsappNumber)
         window.open(
           `https://wa.me/${CONFIG.groomWhatsappNumber}?text=${encodeURIComponent(currentWhatsAppMessage)}`,
-          "_blank",
+          "_blank"
         );
       else alert("Groom number not set");
     };
@@ -431,7 +568,7 @@ function bindWhatsAppButtons() {
       if (CONFIG.brideWhatsappNumber)
         window.open(
           `https://wa.me/${CONFIG.brideWhatsappNumber}?text=${encodeURIComponent(currentWhatsAppMessage)}`,
-          "_blank",
+          "_blank"
         );
       else alert("Bride number not set");
     };
@@ -448,36 +585,14 @@ function bindWhatsAppButtons() {
   }
 }
 
-function enableAudioOnUserInteraction() {
-  let activated = false;
-  const enable = () => {
-    if (activated) return;
-    activated = true;
-    if (bgMusic && bgMusic.paused && CONFIG.musicUrl) {
-      bgMusic
-        .play()
-        .then(() => {
-          bgMusic.pause();
-          bgMusic.currentTime = 0;
-        })
-        .catch(() => {});
-    }
-    document.removeEventListener("click", enable);
-    document.removeEventListener("touchstart", enable);
-  };
-  document.addEventListener("click", enable);
-  document.addEventListener("touchstart", enable);
-}
-
 knockBtn.addEventListener("click", playDoor);
 langBtnDoor.addEventListener("click", toggleLanguage);
 langBtnDet.addEventListener("click", toggleLanguage);
 if (rsvpForm) rsvpForm.addEventListener("submit", handleRSVP);
 
-enableAudioOnUserInteraction();
-
 document.addEventListener("DOMContentLoaded", async () => {
   initAudio();
+  initMusicControl();
   injectContent();
   bindWhatsAppButtons();
   pageLoading.classList.add("active");

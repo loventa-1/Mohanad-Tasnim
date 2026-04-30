@@ -89,6 +89,13 @@
         <button id="lang-btn-details" class="lang-btn">العربية / EN</button>
       </div>
 
+      <!-- MUSIC CONTROL BUTTON -->
+      <button id="music-control-btn" class="music-control-btn" aria-label="Music Control">
+        <span class="music-icon">🔊</span>
+        <span class="music-text en-text">Music On</span>
+        <span class="music-text ar-text">موسيقى</span>
+      </button>
+
       <!-- Hero Invitation Text -->
       <div class="details-hero">
         <div class="hero-crest-mini">
@@ -118,7 +125,7 @@
         <p class="hero-event ar-text">حفل الخطوبة</p>
       </div>
 
-      <!-- Event Detail Cards (glassmorphism style + images) -->
+      <!-- Event Detail Cards -->
       <div class="details-cards">
         <!-- Date Card + COUNTDOWN TIMER + IMAGE -->
         <div class="detail-card" style="--delay: 0.1s">
@@ -182,7 +189,6 @@
           <p>ON The Beach</p>
           <br />
 
-          <!-- الصورة في بطاقة المكان -->
           <img
             src="assets/images/time-of-hall.jpg"
             alt="Hall decoration"
@@ -313,7 +319,7 @@
       </footer>
     </section>
 
-    <audio id="bg-music" loop></audio>
+    <audio id="bg-music" loop preload="auto"></audio>
     <script src="script.js"></script>
   </body>
 </html>

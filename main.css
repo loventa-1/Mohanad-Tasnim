@@ -21,17 +21,15 @@
   --transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
   --btn-left: 50%;
   --btn-top: 72%;
-
-  /* 🔹 متغيرات الخطوط العامة - تحكم في كل الأحجام بسهولة */
-  --base-font-size: 16px; /* الحجم الأساسي للصفحة (يؤثر على كل حاجة) */
-  --card-title-size: 0.9rem; /* حجم عنوان الكارت الصغير (مثل THE VENUE) */
-  --hero-name-size: clamp(28px, 7vw, 58px); /* حجم الأسماء الرئيسية */
-  --hero-amp-size: clamp(32px, 8.5vw, 70px); /* حجم علامة & */
-  --card-value-size: clamp(16px, 4.5vw, 22px); /* حجم النصوص داخل الكروت */
+  --base-font-size: 16px;
+  --card-title-size: 0.9rem;
+  --hero-name-size: clamp(28px, 7vw, 58px);
+  --hero-amp-size: clamp(32px, 8.5vw, 70px);
+  --card-value-size: clamp(16px, 4.5vw, 22px);
 }
 
 html {
-  font-size: var(--base-font-size); /* التحكم العام في كل حاجة */
+  font-size: var(--base-font-size);
 }
 
 *,
@@ -54,7 +52,7 @@ body {
   font-family: var(--font-body);
   color: var(--gold-dark);
   font-weight: 600;
-  font-size: 1rem; /* 1rem = --base-font-size */
+  font-size: 1rem;
   line-height: 1.5;
 }
 
@@ -473,6 +471,53 @@ html[lang="en"] .en-text {
   box-shadow: 0 0 15px rgba(201, 168, 76, 0.3);
 }
 
+/* ═══ MUSIC CONTROL BUTTON ═══ */
+.music-control-btn {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: rgba(13, 10, 6, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(201, 168, 76, 0.5);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  color: var(--gold-light);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.music-control-btn:hover {
+  background: rgba(201, 168, 76, 0.2);
+  border-color: var(--gold);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(201, 168, 76, 0.4);
+}
+
+.music-icon {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 0 2px rgba(201, 168, 76, 0.5));
+}
+
+.music-text {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+html[lang="ar"] .music-control-btn {
+  right: auto;
+  left: 25px;
+  flex-direction: row-reverse;
+}
+
 /* ═══ PAGE 3 · DETAILS ═══ */
 #page-details {
   overflow-y: auto;
@@ -653,7 +698,7 @@ html[lang="en"] .en-text {
   margin-top: 10px;
 }
 
-/* Event Cards - شفافة بدون لون خلفية */
+/* Event Cards */
 .details-cards {
   position: relative;
   z-index: 2;
@@ -719,7 +764,6 @@ html[lang="en"] .en-text {
   line-height: 1.5;
 }
 
-/* تنسيق الصور جوه الكروت */
 .card-image {
   width: 100%;
   max-height: 420px;
@@ -1044,7 +1088,6 @@ html[lang="en"] .en-text {
   .card-image {
     max-height: 320px;
   }
-
   .time-block {
     padding: 8px 12px;
     min-width: 55px;
@@ -1064,6 +1107,15 @@ html[lang="en"] .en-text {
   }
   .hero-crest-mini {
     width: min(160px, 40vw);
+  }
+  .music-control-btn {
+    bottom: 15px;
+    right: 15px;
+    padding: 8px 15px;
+  }
+  html[lang="ar"] .music-control-btn {
+    right: auto;
+    left: 15px;
   }
 }
 
@@ -1104,7 +1156,6 @@ html[lang="en"] .en-text {
   }
 }
 
-/* Card entrance animation */
 @keyframes cardEntrance {
   from {
     opacity: 0;
