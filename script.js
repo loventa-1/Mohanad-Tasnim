@@ -17,7 +17,7 @@ const CONFIG = {
   weddingLocationAr: "فندق برادايس إن بيتش، المعمورة، الإسكندرية",
   weddingMapLink:
     "https://www.google.com/maps/place/%D9%81%D9%86%D8%AF%D9%82+%D8%A8%D8%B1%D8%A7%D8%AF%D8%A7%D9%8A%D8%B3+%D8%A7%D9%86+%D8%A8%D9%8A%D8%AA%D8%B4+%D8%A7%D9%84%D9%85%D8%B9%D9%85%D9%88%D8%B1%D8%A9+%D8%A7%D9%84%D8%A7%D8%B3%D9%83%D9%86%D8%AF%D8%B1%D9%8A%D8%A9%E2%80%AD/@31.2889188,30.025028,17z",
-  crestImage: "assets/images/logo.jpg",
+  crestImage: "assets/images/logo (1).webp",
   doorStaticBg: "assets/images/photo_2026-04-30_07-13-50.jpg",
   doorGif: "assets/images/IMG_4681.MP4",
   detailsBg: "assets/images/background.jpg",
@@ -70,10 +70,10 @@ const countdownMsgAr = document.getElementById("countdown-message-ar");
 // Function to unlock audio on iOS and modern browsers
 function unlockAudioContext() {
   if (audioContextUnlocked || !bgMusic) return;
-  
+
   const unlock = () => {
     if (audioContextUnlocked) return;
-    
+
     // Create a silent audio context to unlock Web Audio
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (AudioContext) {
@@ -87,22 +87,24 @@ function unlockAudioContext() {
       oscillator.stop(0.001);
       context.close();
     }
-    
+
     // Try to play and immediately pause
     if (bgMusic && bgMusic.paused) {
       const playPromise = bgMusic.play();
       if (playPromise !== undefined) {
-        playPromise.then(() => {
-          bgMusic.pause();
-          bgMusic.currentTime = 0;
-          audioContextUnlocked = true;
-        }).catch(() => {});
+        playPromise
+          .then(() => {
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+            audioContextUnlocked = true;
+          })
+          .catch(() => {});
       }
     }
-    
+
     audioContextUnlocked = true;
   };
-  
+
   document.addEventListener("click", unlock, { once: true });
   document.addEventListener("touchstart", unlock, { once: true });
 }
@@ -163,7 +165,7 @@ function initAudio() {
     bgMusic.loop = true;
     bgMusic.volume = 0.65; // Default at 65%
     bgMusic.muted = false;
-    
+
     // Unlock audio for mobile browsers
     unlockAudioContext();
   }
@@ -172,27 +174,27 @@ function initAudio() {
 // Music Control Button Handler
 function initMusicControl() {
   if (!musicControlBtn) return;
-  
-  const musicIcon = musicControlBtn.querySelector('.music-icon');
-  const musicText = musicControlBtn.querySelectorAll('.music-text');
-  
+
+  const musicIcon = musicControlBtn.querySelector(".music-icon");
+  const musicText = musicControlBtn.querySelectorAll(".music-text");
+
   const updateButtonUI = () => {
     if (musicIcon) {
       musicIcon.textContent = isMusicPlaying ? "🔊" : "🔇";
     }
-    musicText.forEach(text => {
-      if (text.classList.contains('en-text')) {
+    musicText.forEach((text) => {
+      if (text.classList.contains("en-text")) {
         text.textContent = isMusicPlaying ? "Music On" : "Music Off";
-      } else if (text.classList.contains('ar-text')) {
+      } else if (text.classList.contains("ar-text")) {
         text.textContent = isMusicPlaying ? "موسيقى" : "إيقاف";
       }
     });
   };
-  
+
   const toggleMusic = (e) => {
     e.stopPropagation();
     if (!bgMusic) return;
-    
+
     if (isMusicPlaying) {
       // Pause music
       bgMusic.pause();
@@ -201,70 +203,76 @@ function initMusicControl() {
       // Play music with proper Promise handling
       const playPromise = bgMusic.play();
       if (playPromise !== undefined) {
-        playPromise.then(() => {
-          isMusicPlaying = true;
-          updateButtonUI();
-        }).catch((error) => {
-          console.log("Playback prevented:", error);
-          isMusicPlaying = false;
-          updateButtonUI();
-          // Try to unlock again on next user interaction
-          if (!audioContextUnlocked) {
-            unlockAudioContext();
-          }
-        });
+        playPromise
+          .then(() => {
+            isMusicPlaying = true;
+            updateButtonUI();
+          })
+          .catch((error) => {
+            console.log("Playback prevented:", error);
+            isMusicPlaying = false;
+            updateButtonUI();
+            // Try to unlock again on next user interaction
+            if (!audioContextUnlocked) {
+              unlockAudioContext();
+            }
+          });
       }
     }
     updateButtonUI();
   };
-  
+
   musicControlBtn.addEventListener("click", toggleMusic);
   updateButtonUI();
 }
 
 function startMusicOnDoorOpen() {
   if (!bgMusic || isMusicPlaying) return;
-  
+
   // Try to play when door opens (user interaction already happened via knock)
   const playPromise = bgMusic.play();
   if (playPromise !== undefined) {
-    playPromise.then(() => {
-      isMusicPlaying = true;
-      if (musicControlBtn) {
-        const musicIcon = musicControlBtn.querySelector('.music-icon');
-        if (musicIcon) musicIcon.textContent = "🔊";
-      }
-    }).catch((error) => {
-      console.log("Auto-play blocked, waiting for user action:", error);
-      isMusicPlaying = false;
-    });
+    playPromise
+      .then(() => {
+        isMusicPlaying = true;
+        if (musicControlBtn) {
+          const musicIcon = musicControlBtn.querySelector(".music-icon");
+          if (musicIcon) musicIcon.textContent = "🔊";
+        }
+      })
+      .catch((error) => {
+        console.log("Auto-play blocked, waiting for user action:", error);
+        isMusicPlaying = false;
+      });
   }
 }
 
 function fadeInMusic(el, vol = 0.65, ms = 1500) {
   if (!el) return;
   el.volume = 0;
-  
+
   const playPromise = el.play();
   if (playPromise !== undefined) {
-    playPromise.then(() => {
-      isMusicPlaying = true;
-      const step = vol / (ms / 50);
-      const id = setInterval(() => {
-        if (el.volume + step < vol) el.volume += step;
-        else {
-          el.volume = vol;
-          clearInterval(id);
+    playPromise
+      .then(() => {
+        isMusicPlaying = true;
+        const step = vol / (ms / 50);
+        const id = setInterval(() => {
+          if (el.volume + step < vol) el.volume += step;
+          else {
+            el.volume = vol;
+            clearInterval(id);
+          }
+        }, 50);
+        if (musicControlBtn) {
+          const musicIcon = musicControlBtn.querySelector(".music-icon");
+          if (musicIcon) musicIcon.textContent = "🔊";
         }
-      }, 50);
-      if (musicControlBtn) {
-        const musicIcon = musicControlBtn.querySelector('.music-icon');
-        if (musicIcon) musicIcon.textContent = "🔊";
-      }
-    }).catch((e) => {
-      console.log("Audio play error:", e);
-      isMusicPlaying = false;
-    });
+      })
+      .catch((e) => {
+        console.log("Audio play error:", e);
+        isMusicPlaying = false;
+      });
   }
 }
 
@@ -276,18 +284,18 @@ function playDoor() {
   doorGif.currentTime = 0;
   doorGif.muted = true;
   doorGif.play().catch((e) => console.warn("Video error:", e));
-  
+
   // Start music when door opens (user already clicked knock button)
   if (bgMusic && CONFIG.musicUrl) {
     bgMusic.currentTime = 0;
     fadeInMusic(bgMusic, 0.65, 1500);
   }
-  
+
   document.querySelector(".door-bg-wrap").classList.add("revealed");
   doorGlowRing.classList.add("active");
   knockBtn.style.opacity = "0";
   knockBtn.style.pointerEvents = "none";
-  
+
   let transitionDone = false;
   const goToDetails = () => {
     if (transitionDone) return;
@@ -414,7 +422,7 @@ function preloadAllAssets() {
               onAssetDone();
               resolve();
             },
-            { once: true }
+            { once: true },
           );
           video.addEventListener(
             "error",
@@ -423,7 +431,7 @@ function preloadAllAssets() {
               onAssetDone();
               resolve();
             },
-            { once: true }
+            { once: true },
           );
         } else if (isAudio) {
           const audio = new Audio();
@@ -437,7 +445,7 @@ function preloadAllAssets() {
               onAssetDone();
               resolve();
             },
-            { once: true }
+            { once: true },
           );
           audio.addEventListener(
             "error",
@@ -446,7 +454,7 @@ function preloadAllAssets() {
               onAssetDone();
               resolve();
             },
-            { once: true }
+            { once: true },
           );
           audio.load();
         } else {
@@ -459,7 +467,7 @@ function preloadAllAssets() {
           };
           img.src = src;
         }
-      })
+      }),
   );
   return Promise.all(promises);
 }
@@ -497,7 +505,7 @@ function toggleLanguage() {
   document.documentElement.setAttribute("lang", currentLang);
   document.documentElement.setAttribute(
     "dir",
-    currentLang === "ar" ? "rtl" : "ltr"
+    currentLang === "ar" ? "rtl" : "ltr",
   );
   const nameEl = document.getElementById("rsvp-name");
   const msgEl = document.getElementById("rsvp-msg");
@@ -517,7 +525,7 @@ function handleRSVP(event) {
     alert(
       currentLang === "ar"
         ? "الرجاء إدخال اسمك الكامل."
-        : "Please enter your full name."
+        : "Please enter your full name.",
     );
     return;
   }
@@ -525,7 +533,7 @@ function handleRSVP(event) {
     alert(
       currentLang === "ar"
         ? "الرجاء اختيار حالة الحضور."
-        : "Please confirm attendance."
+        : "Please confirm attendance.",
     );
     return;
   }
@@ -556,7 +564,7 @@ function bindWhatsAppButtons() {
       if (CONFIG.groomWhatsappNumber)
         window.open(
           `https://wa.me/${CONFIG.groomWhatsappNumber}?text=${encodeURIComponent(currentWhatsAppMessage)}`,
-          "_blank"
+          "_blank",
         );
       else alert("Groom number not set");
     };
@@ -568,7 +576,7 @@ function bindWhatsAppButtons() {
       if (CONFIG.brideWhatsappNumber)
         window.open(
           `https://wa.me/${CONFIG.brideWhatsappNumber}?text=${encodeURIComponent(currentWhatsAppMessage)}`,
-          "_blank"
+          "_blank",
         );
       else alert("Bride number not set");
     };
